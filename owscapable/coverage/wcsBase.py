@@ -17,7 +17,7 @@ from owscapable.etree import etree
 import cgi
 from StringIO import StringIO
 from owscapable.namespaces import Namespaces
-from owscapable.utils import testXMLValue, xmltag_split, nspath_eval
+from owscapable.util import testXMLValue, xmltag_split, nspath_eval
 
 
 class ServiceException(Exception):
@@ -230,6 +230,7 @@ class CoverageOffering(object):
         self.min_pos, self.max_pos, self.srs_urn = self._get_envelope(envelope)
 
         # get the domain set for the temporal extents(s)
+        # NOTE: this may have cardinality issues
         domain_set = elem.find(nspath_eval('wcs:domainSet', self.namespaces))
         if domain_set is not None:
             self.spatial_domain = {}
@@ -284,6 +285,6 @@ class CoverageOffering(object):
 
     def _get_envelope(self, envelope):
         srs_urn = envelope.attrib.get('srsName', '')
-        min_pos = testXMLValue(envelope.find(nspath_eval('gml:pos', self.namespaces)))
-        max_pos = testXMLValue(envelope.find(nspath_eval('gml:pos', self.namespaces)))
+        min_pos = testXMLValue(envelope.findall(nspath_eval('gml:pos', self.namespaces))[0])
+        max_pos = testXMLValue(envelope.findall(nspath_eval('gml:pos', self.namespaces))[-1])
         return min_pos, max_pos, srs_urn
