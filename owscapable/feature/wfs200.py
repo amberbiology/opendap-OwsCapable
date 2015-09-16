@@ -23,7 +23,7 @@ from urllib import urlencode
 from urllib2 import urlopen
 
 import logging
-from owslib.util import log
+from owscapable.util import log
 
 n = Namespaces()
 WFS_NAMESPACE = n.get_namespace("wfs20")

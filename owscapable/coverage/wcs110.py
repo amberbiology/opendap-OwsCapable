@@ -17,7 +17,7 @@ from urllib import urlencode
 from owscapable.crs import Crs
 
 import logging
-from owslib.util import log
+from owscapable.util import log
 
 
 def ns(tags):
