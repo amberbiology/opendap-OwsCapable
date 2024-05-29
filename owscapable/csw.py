@@ -14,10 +14,10 @@ from __future__ import (absolute_import, division, print_function)
 import base64
 import inspect
 import warnings
-import StringIO
+import io
 import random
-from urllib import urlencode
-from urllib2 import Request, urlopen
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from owscapable.util import OrderedDict
 
@@ -512,7 +512,7 @@ class CatalogueServiceWeb:
         """
         
         urls=[]
-        for key,rec in self.records.iteritems():
+        for key,rec in self.records.items():
             #create a generator object, and iterate through it until the match is found
             #if not found, gets the default value (here "none")
             url = next((d['url'] for d in rec.references if d['scheme'] == service_string), None)
@@ -600,7 +600,7 @@ class CatalogueServiceWeb:
     def _invoke(self):
         # do HTTP request
 
-        if isinstance(self.request, basestring):  # GET KVP
+        if isinstance(self.request, str):  # GET KVP
             req = Request(self.request)
             if self.username is not None and self.password is not None:
                 base64string = base64.encodestring('%s:%s' % (self.username, self.password))[:-1]
@@ -616,11 +616,11 @@ class CatalogueServiceWeb:
                 if caller == 'getrecords2': caller = 'getrecords'
                 try:
                     op = self.get_operation_by_name(caller)
-                    post_verbs = filter(lambda x: x.get('type').lower() == 'post', op.methods)
+                    post_verbs = [x for x in op.methods if x.get('type').lower() == 'post']
                     if len(post_verbs) > 1:
                         # Filter by constraints.  We must match a PostEncoding of "XML"
                         try:
-                            xml_post_url = next(x for x in filter(list, ([pv.get('url') for const in pv.get('constraints') if const.name.lower() == "postencoding" and 'xml' in map(lambda x: x.lower(), const.values)] for pv in post_verbs)))[0]
+                            xml_post_url = next(x for x in filter(list, ([pv.get('url') for const in pv.get('constraints') if const.name.lower() == "postencoding" and 'xml' in [x.lower() for x in const.values]] for pv in post_verbs)))[0]
                         except StopIteration:
                             # Well, just use the first one.
                             xml_post_url = post_verbs[0].get('url')
@@ -652,7 +652,7 @@ class CatalogueServiceWeb:
         '''
 
         # parse result see if it's XML
-        self._exml = etree.parse(StringIO.StringIO(response))
+        self._exml = etree.parse(io.StringIO(response))
 
         # it's XML.  Attempt to decipher whether the XML response is CSW-ish """
         valid_xpaths = [

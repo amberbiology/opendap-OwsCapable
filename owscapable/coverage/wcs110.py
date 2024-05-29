@@ -13,7 +13,7 @@ from __future__ import (absolute_import, division, print_function)
 
 from .wcsBase import WCSBase, WCSCapabilitiesReader, ServiceException
 from owscapable.util import openURL, testXMLValue, xmltag_split
-from urllib import urlencode
+from urllib.parse import urlencode
 from owscapable.crs import Crs
 
 import logging
@@ -48,7 +48,7 @@ class WebCoverageService_1_1_x(WCSBase):
 
     def __getitem__(self, name):
         ''' check contents dictionary to allow dict like access to service layers'''
-        if name in self.__getattribute__('contents').keys():
+        if name in list(self.__getattribute__('contents').keys()):
             return self.__getattribute__('contents')[name]
         else:
             raise KeyError("No content named %s" % name)
@@ -352,7 +352,7 @@ class ContentMetadata(object):
         # get the ancestors related to nested CoverageSummary elems and the local keywords
         tags = [elem.tag] + [e.tag for e in elem.iterancestors() if e.tag in ['CoverageSummary']]
         xpaths = ['/'.join(['..'] * i + ['*[local-name()="Keywords"]', '*[local-name()="Keyword"]'])
-                  for i in xrange(len(tags))]
+                  for i in range(len(tags))]
         self.keywords = [k.text for k in findall(elem, ' | '.join(xpaths))] if xpaths else []
 
         self.boundingBoxWGS84 = None

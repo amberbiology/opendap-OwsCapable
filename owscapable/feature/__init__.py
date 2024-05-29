@@ -9,7 +9,7 @@ from __future__ import (absolute_import, division, print_function)
 
 from owscapable.crs import Crs
 
-from urllib import urlencode
+from urllib.parse import urlencode
 import logging
 from owscapable.util import log
 
@@ -71,7 +71,7 @@ class WebFeatureService_(object):
             # GetCaps document (the 'id' attribute in the Crs object).
             return self.contents[typename].crsOptions[index]
         except ValueError:
-            options = ", ".join(map(lambda x: x.id, self.contents[typename].crsOptions))
+            options = ", ".join([x.id for x in self.contents[typename].crsOptions])
             log.warning("Requested srsName '%s' not available for requested typename '%s'. \
                          Options are: %s. " % (srs.getcode(), typename, options))
             return None

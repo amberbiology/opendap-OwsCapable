@@ -16,13 +16,14 @@ from datetime import datetime
 import pytz
 from owscapable.etree import etree
 from owscapable.namespaces import Namespaces
-import urlparse, urllib2
-from urllib2 import urlopen, HTTPError, Request
-from urllib2 import HTTPPasswordMgrWithDefaultRealm
-from urllib2 import HTTPBasicAuthHandler
-from StringIO import StringIO
+import urllib.parse, urllib.request, urllib.error, urllib.parse
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
+from urllib.request import HTTPPasswordMgrWithDefaultRealm
+from urllib.request import HTTPBasicAuthHandler
+from io import StringIO
 import cgi
-from urllib import urlencode
+from urllib.parse import urlencode
 import re
 from copy import deepcopy
 import warnings
@@ -47,7 +48,7 @@ class RereadableURL(StringIO,object):
         timestep = 0.25
         timecur = 0.0
         while content == "":
-            page = urllib2.urlopen(u.url)
+            page = urllib.request.urlopen(u.url)
             text = page.read()
             #The header line with <?xml... should not be in content.
             if "<?xml" == text.strip()[:5]:
@@ -69,7 +70,7 @@ class ServiceException(Exception):
 # http://stackoverflow.com/questions/6256183/combine-two-dictionaries-of-dictionaries-python
 dict_union = lambda d1,d2: dict((x,(dict_union(d1.get(x,{}),d2[x]) if
   isinstance(d2.get(x),dict) else d2.get(x,d1.get(x)))) for x in
-  set(d1.keys()+d2.keys()))
+  set(list(d1.keys())+list(d2.keys())))
 
 
 # Infinite DateTimes for Python.  Used in SWE 2.0 and other OGC specs as "INF" and "-INF"
@@ -157,7 +158,7 @@ def openURL(url_base, data, method='Get', cookies=None, username=None, password=
         passman = HTTPPasswordMgrWithDefaultRealm()
         passman.add_password(None, url_base, username, password)
         auth_handler = HTTPBasicAuthHandler(passman)
-        opener = urllib2.build_opener(auth_handler)
+        opener = urllib.request.build_opener(auth_handler)
         openit = opener.open
     else:
         # NOTE: optionally set debuglevel>0 to debug HTTP connection
@@ -243,12 +244,12 @@ def cleanup_namespaces(element):
 
 
 def add_namespaces(root, ns_keys):
-    if isinstance(ns_keys, basestring):
+    if isinstance(ns_keys, str):
         ns_keys = [ns_keys]
 
     namespaces = Namespaces()
 
-    ns_keys = map(lambda x: (x, namespaces.get_namespace(x)), ns_keys)
+    ns_keys = [(x, namespaces.get_namespace(x)) for x in ns_keys]
 
     if etree.__name__ != 'lxml.etree':
         # We can just add more namespaces when not using lxml.
@@ -273,7 +274,7 @@ def add_namespaces(root, ns_keys):
         # Recreate the root element with updated nsmap
         new_root = etree.Element(root.tag, nsmap=new_map)
         # Carry over attributes
-        for a, v in root.items():
+        for a, v in list(root.items()):
             new_root.set(a, v)
         # Carry over children
         for child in root:
@@ -356,8 +357,8 @@ def http_post(url=None, request=None, lang='en-US', timeout=10, username=None, p
     """
 
     if url is not None:
-        u = urlparse.urlsplit(url)
-        r = urllib2.Request(url, request)
+        u = urllib.parse.urlsplit(url)
+        r = urllib.request.Request(url, request)
         r.add_header('User-Agent', 'OWSLib (https://geopython.github.io/OWSLib)')
         r.add_header('Content-type', 'text/xml')
         r.add_header('Content-length', '%d' % len(request))
@@ -370,11 +371,11 @@ def http_post(url=None, request=None, lang='en-US', timeout=10, username=None, p
             base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
             r.add_header('Authorization', 'Basic %s' % base64string) 
         try:
-            up = urllib2.urlopen(r,timeout=timeout);
+            up = urllib.request.urlopen(r,timeout=timeout);
         except TypeError:
             import socket
             socket.setdefaulttimeout(timeout)
-            up = urllib2.urlopen(r)
+            up = urllib.request.urlopen(r)
 
         ui = up.info()  # headers
         response = up.read()
@@ -484,7 +485,7 @@ def build_get_url(base_url, params):
 
     pars = [x[0] for x in qs]
 
-    for key,value in params.iteritems():
+    for key,value in params.items():
         if key not in pars:
             qs.append( (key,value) )
 
@@ -548,7 +549,7 @@ a newline. This will extract out all of the keywords correctly.
         return []
     keywords = [re.split(r'[\n\r]+', f.text) for f in elements if f is not None and f.text]
     flattened = [item.strip() for sublist in keywords for item in sublist]
-    remove_blank = filter(None, flattened)
+    remove_blank = [_f for _f in flattened if _f]
     return remove_blank
 
 

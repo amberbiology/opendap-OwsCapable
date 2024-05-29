@@ -15,7 +15,7 @@ Web Coverage Server (WCS) methods and metadata. Factory function.
 
 from __future__ import (absolute_import, division, print_function)
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from . import etree
 from .coverage import wcs100, wcs110, wcsBase
 
@@ -28,11 +28,11 @@ def WebCoverageService(url, version=None, xml=None, cookies=None, timeout=30):
             reader = wcsBase.WCSCapabilitiesReader()
             request = reader.capabilities_url(url)
             if cookies is None:
-                xml = urllib2.urlopen(request, timeout=timeout).read()
+                xml = urllib.request.urlopen(request, timeout=timeout).read()
             else:
-                req = urllib2.Request(request)
+                req = urllib.request.Request(request)
                 req.add_header('Cookie', cookies)   
-                xml=urllib2.urlopen(req, timeout=timeout)
+                xml=urllib.request.urlopen(req, timeout=timeout)
         capabilities = etree.etree.fromstring(xml)
         version = capabilities.get('version')
         del capabilities

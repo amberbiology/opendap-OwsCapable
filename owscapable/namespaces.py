@@ -72,7 +72,7 @@ class Namespaces(object):
             'http://www.opengis.net/wfs/2.0'
         """
         retval = None
-        if key in self.namespace_dict.keys():
+        if key in list(self.namespace_dict.keys()):
             retval = self.namespace_dict[key]
         return retval
     
@@ -102,7 +102,7 @@ class Namespaces(object):
         key += version
 
         retval = None
-        if key in self.namespace_dict.keys():
+        if key in list(self.namespace_dict.keys()):
             retval = self.namespace_dict[key]
             
         return retval
@@ -131,7 +131,7 @@ class Namespaces(object):
         if keys is None or len(keys) == 0:
             return self.namespace_dict
 
-        if isinstance(keys, unicode) or isinstance(keys, str):
+        if isinstance(keys, str) or isinstance(keys, str):
             return { keys: self.get_namespace(keys) }
 
         retval = {}
@@ -141,7 +141,7 @@ class Namespaces(object):
         return retval
 
     def get_namespace_from_url(self, url):
-        for k, v in self.namespace_dict.items():
+        for k, v in list(self.namespace_dict.items()):
             if v == url:
                 return k
         return None

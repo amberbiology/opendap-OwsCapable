@@ -18,9 +18,9 @@ from owscapable.namespaces import Namespaces
 
 #other imports
 import cgi
-from cStringIO import StringIO
-from urllib import urlencode
-from urllib2 import urlopen
+from io import StringIO
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 import logging
 from owscapable.util import log
@@ -60,7 +60,7 @@ class WebFeatureService_2_0_0(WebFeatureService_):
     
     def __getitem__(self,name):
         ''' check contents dictionary to allow dict like access to service layers'''
-        if name in self.__getattribute__('contents').keys():
+        if name in list(self.__getattribute__('contents').keys()):
             return self.__getattribute__('contents')[name]
         else:
             raise KeyError("No content named %s" % name)
@@ -236,7 +236,7 @@ class WebFeatureService_2_0_0(WebFeatureService_):
         if typename:
             request['typename']=str(typename)
         if kwargs:
-            for kw in kwargs.keys():
+            for kw in list(kwargs.keys()):
                 request[kw]=str(kwargs[kw])
         encoded_request=urlencode(request)
         u = urlopen(base_url + encoded_request)
@@ -293,7 +293,7 @@ class WebFeatureService_2_0_0(WebFeatureService_):
             tempdict2[id]=(abstract, params) #store in another temporary dictionary
         
         #now group the results into StoredQuery objects:
-        for key in tempdict.keys(): 
+        for key in list(tempdict.keys()): 
             abstract='blah'
             parameters=[]
             sqs.append(StoredQuery(key, tempdict[key][0], tempdict[key][1], tempdict2[key][0], tempdict2[key][1]))
@@ -386,7 +386,7 @@ class ContentMetadata:
 
             if metadataUrl['url'] is not None and parse_remote_metadata:  # download URL
                 try:
-                    content = urllib2.urlopen(metadataUrl['url'], timeout=timeout)
+                    content = urllib.request.urlopen(metadataUrl['url'], timeout=timeout)
                     doc = etree.parse(content)
                     try:  # FGDC
                         metadataUrl['metadata'] = Metadata(doc)

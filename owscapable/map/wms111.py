@@ -18,8 +18,8 @@ Support for version 1.1.1 of the WMS protocol.
 from __future__ import (absolute_import, division, print_function)
 
 import cgi
-import urllib2
-from urllib import urlencode
+import urllib.request, urllib.error, urllib.parse
+from urllib.parse import urlencode
 import warnings
 from owscapable.etree import etree
 from owscapable.util import openURL, testXMLValue, extract_xml_list, xmltag_split
@@ -51,7 +51,7 @@ class WebMapService_1_1_1(object):
 
     def __getitem__(self,name):
         ''' check contents dictionary to allow dict like access to service layers'''
-        if name in self.__getattribute__('contents').keys():
+        if name in list(self.__getattribute__('contents').keys()):
             return self.__getattribute__('contents')[name]
         else:
             raise KeyError("No content named %s" % name)
@@ -241,7 +241,7 @@ class WebMapService_1_1_1(object):
         if u.info()['Content-Type'] == 'application/vnd.ogc.se_xml':
             se_xml = u.read()
             se_tree = etree.fromstring(se_xml)
-            err_message = unicode(se_tree.find('ServiceException').text).strip()
+            err_message = str(se_tree.find('ServiceException').text).strip()
             raise ServiceException(err_message, se_xml)
         return u
         
@@ -413,7 +413,7 @@ class ContentMetadata:
             # some servers found in the wild use a single SRS
             # tag containing a whitespace separated list of SRIDs
             # instead of several SRS tags. hence the inner loop
-            for srslist in map(lambda x: x.text, elem.findall('SRS')):
+            for srslist in [x.text for x in elem.findall('SRS')]:
                 if srslist:
                     for srs in srslist.split():
                         self.crsOptions.append(srs)
@@ -483,7 +483,7 @@ class ContentMetadata:
 
             if metadataUrl['url'] is not None and parse_remote_metadata:  # download URL
                 try:
-                    content = urllib2.urlopen(metadataUrl['url'], timeout=timeout)
+                    content = urllib.request.urlopen(metadataUrl['url'], timeout=timeout)
                     doc = etree.parse(content)
                     if metadataUrl['type'] is not None:
                         if metadataUrl['type'] == 'FGDC':

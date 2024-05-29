@@ -10,9 +10,9 @@
 from __future__ import (absolute_import, division, print_function)
 
 import cgi
-from cStringIO import StringIO
-from urllib import urlencode
-from urllib2 import urlopen
+from io import StringIO
+from urllib.parse import urlencode
+from urllib.request import urlopen
 from owscapable.util import openURL, testXMLValue, nspath_eval, ServiceException
 from owscapable.etree import etree
 from owscapable.fgdc import Metadata
@@ -54,7 +54,7 @@ class WebFeatureService_1_1_0(WebFeatureService_):
 
     def __getitem__(self, name):
         ''' check contents dictionary to allow dict like access to service layers'''
-        if name in self.__getattribute__('contents').keys():
+        if name in list(self.__getattribute__('contents').keys()):
             return self.__getattribute__('contents')[name]
         else:
             raise KeyError("No content named %s" % name)
@@ -182,7 +182,7 @@ class WebFeatureService_1_1_0(WebFeatureService_):
                 if srsnameobj is not None:
                     request['srsname'] = srsnameobj.id
                 else:
-                    options = ", ".join(map(lambda x: x.id, self.contents[typename[0]].crsOptions))
+                    options = ", ".join([x.id for x in self.contents[typename[0]].crsOptions])
                     raise ServiceException(
                         "SRSNAME %s not supported.  Options: %s" % (srsname, options)
                     )
