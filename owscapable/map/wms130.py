@@ -648,6 +648,6 @@ class WMSCapabilitiesReader:
 
         string should be an XML capabilities document
         """
-        if not isinstance(st, str):
-            raise ValueError("String must be of type string, not %s" % type(st))
+        # if not isinstance(st, str):
+        #    raise ValueError("String must be of type string, not %s" % type(st))
         return etree.fromstring(st)

@@ -485,7 +485,7 @@ def build_get_url(base_url, params):
 
     pars = [x[0] for x in qs]
 
-    for key,value in params.items():
+    for key,value in list(params.items()):
         if key not in pars:
             qs.append( (key,value) )
 
