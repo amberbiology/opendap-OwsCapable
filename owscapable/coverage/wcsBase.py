@@ -1,4 +1,3 @@
-# -*- coding: ISO-8859-15 -*-
 # =============================================================================
 # Copyright (c) 2004, 2006 Sean C. Gillies
 # Copyright (c) 2007 STFC <http://www.stfc.ac.uk>
@@ -121,10 +120,14 @@ class WCSCapabilitiesReader(object):
         instance of WCSCapabilitiesInfoset
         string should be an XML capabilities document
         """
-        if not isinstance(st, str):
-            raise ValueError("String must be of type string, not %s" % type(st))
-        return etree.fromstring(st)
 
+        # Directly pass bytes or string without an encoding declaration
+        if isinstance(st, bytes):
+            return etree.fromstring(st)  # Directly parse bytes with an encoding declaration
+        elif isinstance(st, str):
+            return etree.fromstring(st)  # Directly parse strings without an encoding declaration
+        else:
+            raise ValueError("Input must be bytes or string, not %s" % type(st))
 
 class DescribeCoverageReader(object):
     """Read and parses WCS DescribeCoverage document into a lxml.etree infoset

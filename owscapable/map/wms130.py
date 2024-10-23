@@ -375,7 +375,7 @@ class ContentMetadata:
             if title is not None:
                 self.attribution['title'] = title.text
             if url is not None:
-                self.attribution['url'] = url.attrib['{http://www.w3.org/1999/xlink}href']
+                self.attribution['url'] = (url.attrib.get('{http://www.w3.org/1999/xlink}href') or url.attrib.get('{http://www.w3.org/1999/xlink}href'))
             if logo is not None:
                 self.attribution['logo_size'] = (
                     int(logo.attrib['width']),
@@ -526,7 +526,9 @@ class OperationMetadata:
         self.formatOptions = [f.text for f in elem.findall(nspath('Format', WMS_NAMESPACE))]
         self.methods = []
         for verb in elem.findall(nspath('DCPType/HTTP/*', WMS_NAMESPACE)):
-            url = verb.find(nspath('OnlineResource', WMS_NAMESPACE)).attrib['{http://www.w3.org/1999/xlink}href']
+            xml_element = verb.find(nspath('OnlineResource', WMS_NAMESPACE))
+            url = (xml_element.attrib.get('{http://www.w3.org/1999/xlink}href') or
+                   xml_element.attrib.get('{https://www.w3.org/1999/xlink}href'))
             self.methods.append({'type': xmltag_split(verb.tag), 'url': url})
 
 
@@ -648,6 +650,11 @@ class WMSCapabilitiesReader:
 
         string should be an XML capabilities document
         """
-        # if not isinstance(st, str):
-        #    raise ValueError("String must be of type string, not %s" % type(st))
-        return etree.fromstring(st)
+
+        # Directly pass bytes or string without an encoding declaration
+        if isinstance(st, bytes):
+            return etree.fromstring(st)  # Directly parse bytes with an encoding declaration
+        elif isinstance(st, str):
+            return etree.fromstring(st)  # Directly parse strings without an encoding declaration
+        else:
+            raise ValueError("Input must be bytes or string, not %s" % type(st))
