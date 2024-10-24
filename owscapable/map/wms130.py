@@ -34,6 +34,21 @@ def strip_ns(tag):
     return tag[tag.index('}') + 1:]
 
 
+def get_first_valid_href(element, keys=('{http://www.w3.org/1999/xlink}href', 'xlink_href')):
+    """
+    Tries to get the first valid attribute from the element for the given keys.
+    
+    :param element: The XML element.
+    :param keys: Tuple of attribute keys to try, defaulting to commonly used xlink keys.
+    :return: The value of the first found attribute, or None if none are found.
+    """
+    for key in keys:
+        value = element.attrib.get(key)
+        if value is not None:
+            return value
+    return None
+
+
 class ServiceException(Exception):
     """WMS ServiceException
 
@@ -278,7 +293,7 @@ class ServiceProvider(object):
             self.name = name.text
         else:
             self.name = None
-        self.url = self._root.find(nspath('OnlineResource', WMS_NAMESPACE)).attrib.get('{http://www.w3.org/1999/xlink}href', '')
+        self.url = get_first_valid_href(self._root.find(nspath('OnlineResource', WMS_NAMESPACE)))
         # contact metadata
         contact = self._root.find(nspath('ContactInformation', WMS_NAMESPACE))
         # sometimes there is a contact block that is empty, so make
@@ -375,15 +390,15 @@ class ContentMetadata:
             if title is not None:
                 self.attribution['title'] = title.text
             if url is not None:
-                self.attribution['url'] = (url.attrib.get('{http://www.w3.org/1999/xlink}href') or url.attrib.get('{http://www.w3.org/1999/xlink}href'))
+                self.attribution['url'] = get_first_valid_href(url)
             if logo is not None:
                 self.attribution['logo_size'] = (
                     int(logo.attrib['width']),
                     int(logo.attrib['height'])
                 )
-                self.attribution['logo_url'] = logo.find(
+                self.attribution['logo_url'] = get_first_valid_href(logo.find(
                     nspath('OnlineResource', WMS_NAMESPACE)
-                ).attrib['{http://www.w3.org/1999/xlink}href']
+                ))
 
         b = elem.find(nspath('EX_GeographicBoundingBox', WMS_NAMESPACE))
         if b is not None:
@@ -450,7 +465,7 @@ class ContentMetadata:
             # legend url
             legend = s.find(nspath('LegendURL/OnlineResource', WMS_NAMESPACE))
             if legend is not None:
-                style['legend'] = legend.attrib['{http://www.w3.org/1999/xlink}href']
+                style['legend'] = get_first_valid_href(legend)
             self.styles[name.text] = style
 
         # keywords
@@ -480,7 +495,8 @@ class ContentMetadata:
             metadataUrl = {
                 'type': testXMLValue(m.attrib['type'], attrib=True),
                 'format': testXMLValue(m.find(nspath('Format', WMS_NAMESPACE))),
-                'url': testXMLValue(m.find(nspath('OnlineResource', WMS_NAMESPACE)).attrib['{http://www.w3.org/1999/xlink}href'], attrib=True)
+                # try both variations
+                'url': testXMLValue(get_first_valid_href(m.find(nspath('OnlineResource', WMS_NAMESPACE))), attrib=True)
             }
 
             if metadataUrl['url'] is not None and parse_remote_metadata:  # download URL
@@ -502,7 +518,7 @@ class ContentMetadata:
         for m in elem.findall(nspath('DataURL', WMS_NAMESPACE)):
             dataUrl = {
                 'format': m.find(nspath('Format', WMS_NAMESPACE)).text.strip(),
-                'url': m.find(nspath('OnlineResource', WMS_NAMESPACE)).attrib['{http://www.w3.org/1999/xlink}href']
+                'url': get_first_valid_href(m.find(nspath('OnlineResource', WMS_NAMESPACE)))
             }
             self.dataUrls.append(dataUrl)
 
@@ -527,8 +543,7 @@ class OperationMetadata:
         self.methods = []
         for verb in elem.findall(nspath('DCPType/HTTP/*', WMS_NAMESPACE)):
             xml_element = verb.find(nspath('OnlineResource', WMS_NAMESPACE))
-            url = (xml_element.attrib.get('{http://www.w3.org/1999/xlink}href') or
-                   xml_element.attrib.get('{https://www.w3.org/1999/xlink}href'))
+            url = get_first_valid_href(xml_element)
             self.methods.append({'type': xmltag_split(verb.tag), 'url': url})
 
 
