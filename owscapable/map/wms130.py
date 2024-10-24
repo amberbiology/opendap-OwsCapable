@@ -25,7 +25,7 @@ from owscapable.etree import etree
 from owscapable.util import openURL, testXMLValue, extract_xml_list, xmltag_split, nspath
 from owscapable.fgdc import Metadata
 from owscapable.iso import MD_Metadata
-
+from owscapable.map import get_first_valid_href_attrib
 
 WMS_NAMESPACE = 'http://www.opengis.net/wms'
 
@@ -33,20 +33,6 @@ WMS_NAMESPACE = 'http://www.opengis.net/wms'
 def strip_ns(tag):
     return tag[tag.index('}') + 1:]
 
-
-def get_first_valid_href(element, keys=('{http://www.w3.org/1999/xlink}href', 'xlink_href')):
-    """
-    Tries to get the first valid attribute from the element for the given keys.
-    
-    :param element: The XML element.
-    :param keys: Tuple of attribute keys to try, defaulting to commonly used xlink keys.
-    :return: The value of the first found attribute, or None if none are found.
-    """
-    for key in keys:
-        value = element.attrib.get(key)
-        if value is not None:
-            return value
-    return None
 
 
 class ServiceException(Exception):
@@ -293,7 +279,7 @@ class ServiceProvider(object):
             self.name = name.text
         else:
             self.name = None
-        self.url = get_first_valid_href(self._root.find(nspath('OnlineResource', WMS_NAMESPACE)))
+        self.url = get_first_valid_href_attrib(self._root.find(nspath('OnlineResource', WMS_NAMESPACE)))
         # contact metadata
         contact = self._root.find(nspath('ContactInformation', WMS_NAMESPACE))
         # sometimes there is a contact block that is empty, so make
@@ -390,13 +376,13 @@ class ContentMetadata:
             if title is not None:
                 self.attribution['title'] = title.text
             if url is not None:
-                self.attribution['url'] = get_first_valid_href(url)
+                self.attribution['url'] = get_first_valid_href_attrib(url)
             if logo is not None:
                 self.attribution['logo_size'] = (
                     int(logo.attrib['width']),
                     int(logo.attrib['height'])
                 )
-                self.attribution['logo_url'] = get_first_valid_href(logo.find(
+                self.attribution['logo_url'] = get_first_valid_href_attrib(logo.find(
                     nspath('OnlineResource', WMS_NAMESPACE)
                 ))
 
@@ -465,7 +451,7 @@ class ContentMetadata:
             # legend url
             legend = s.find(nspath('LegendURL/OnlineResource', WMS_NAMESPACE))
             if legend is not None:
-                style['legend'] = get_first_valid_href(legend)
+                style['legend'] = get_first_valid_href_attrib(legend)
             self.styles[name.text] = style
 
         # keywords
@@ -496,7 +482,7 @@ class ContentMetadata:
                 'type': testXMLValue(m.attrib['type'], attrib=True),
                 'format': testXMLValue(m.find(nspath('Format', WMS_NAMESPACE))),
                 # try both variations
-                'url': testXMLValue(get_first_valid_href(m.find(nspath('OnlineResource', WMS_NAMESPACE))), attrib=True)
+                'url': testXMLValue(get_first_valid_href_attrib(m.find(nspath('OnlineResource', WMS_NAMESPACE))), attrib=True)
             }
 
             if metadataUrl['url'] is not None and parse_remote_metadata:  # download URL
@@ -518,7 +504,7 @@ class ContentMetadata:
         for m in elem.findall(nspath('DataURL', WMS_NAMESPACE)):
             dataUrl = {
                 'format': m.find(nspath('Format', WMS_NAMESPACE)).text.strip(),
-                'url': get_first_valid_href(m.find(nspath('OnlineResource', WMS_NAMESPACE)))
+                'url': get_first_valid_href_attrib(m.find(nspath('OnlineResource', WMS_NAMESPACE)))
             }
             self.dataUrls.append(dataUrl)
 
@@ -543,7 +529,7 @@ class OperationMetadata:
         self.methods = []
         for verb in elem.findall(nspath('DCPType/HTTP/*', WMS_NAMESPACE)):
             xml_element = verb.find(nspath('OnlineResource', WMS_NAMESPACE))
-            url = get_first_valid_href(xml_element)
+            url = get_first_valid_href_attrib(xml_element)
             self.methods.append({'type': xmltag_split(verb.tag), 'url': url})
 
 

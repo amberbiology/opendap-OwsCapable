@@ -25,7 +25,7 @@ from owscapable.etree import etree
 from owscapable.util import openURL, testXMLValue, extract_xml_list, xmltag_split
 from owscapable.fgdc import Metadata
 from owscapable.iso import MD_Metadata
-
+from owscapable.map import get_first_valid_href_attrib
 
 class ServiceException(Exception):
     """WMS ServiceException
@@ -285,7 +285,7 @@ class ServiceProvider(object):
             self.name = name.text
         else:
             self.name = None
-        self.url = self._root.find('OnlineResource').attrib.get('{http://www.w3.org/1999/xlink}href', '')
+        self.url = get_first_valid_href_attrib(self._root.find('OnlineResource'))
         # contact metadata
         contact = self._root.find('ContactInformation')
         # sometimes there is a contact block that is empty, so make
@@ -379,14 +379,14 @@ class ContentMetadata:
             if title is not None:
                 self.attribution['title'] = title.text
             if url is not None:
-                self.attribution['url'] = url.attrib['{http://www.w3.org/1999/xlink}href']
+                self.attribution['url'] = get_first_valid_href_attrib(url)
             if logo is not None:
                 self.attribution['logo_size'] = (
                     int(logo.attrib['width']), int(logo.attrib['height'])
                 )
-                self.attribution['logo_url'] = logo.find(
+                self.attribution['logo_url'] = get_first_valid_href_attrib(logo.find(
                     'OnlineResource'
-                ).attrib['{http://www.w3.org/1999/xlink}href']
+                ))
 
         b = elem.find('LatLonBoundingBox')
         if b is not None:
@@ -448,7 +448,7 @@ class ContentMetadata:
             # legend url
             legend = s.find('LegendURL/OnlineResource')
             if legend is not None:
-                style['legend'] = legend.attrib['{http://www.w3.org/1999/xlink}href']
+                style['legend'] = get_first_valid_href_attrib(legend)
             self.styles[name.text] = style
 
         # keywords
@@ -478,7 +478,7 @@ class ContentMetadata:
             metadataUrl = {
                 'type': testXMLValue(m.attrib['type'], attrib=True),
                 'format': testXMLValue(m.find('Format')),
-                'url': testXMLValue(m.find('OnlineResource').attrib['{http://www.w3.org/1999/xlink}href'], attrib=True)
+                'url': testXMLValue(get_first_valid_href_attrib(m.find('OnlineResource')), attrib=True)
             }
 
             if metadataUrl['url'] is not None and parse_remote_metadata:  # download URL
@@ -500,7 +500,7 @@ class ContentMetadata:
         for m in elem.findall('DataURL'):
             dataUrl = {
                 'format': m.find('Format').text.strip(),
-                'url': m.find('OnlineResource').attrib['{http://www.w3.org/1999/xlink}href']
+                'url': get_first_valid_href_attrib(m.find('OnlineResource'))
             }
             self.dataUrls.append(dataUrl)
                 
@@ -524,7 +524,7 @@ class OperationMetadata:
         self.formatOptions = [f.text for f in elem.findall('Format')]
         self.methods = []
         for verb in elem.findall('DCPType/HTTP/*'):
-            url = verb.find('OnlineResource').attrib['{http://www.w3.org/1999/xlink}href']
+            url = get_first_valid_href_attrib(verb.find('OnlineResource'))
             self.methods.append({'type' : xmltag_split(verb.tag), 'url': url})
 
 
